@@ -16,7 +16,7 @@ mongoose
     useFindAndModify: false,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("Connection successfully established!"))
+  .then(() => console.log("DB connection successfully established!"))
 
 /* SAVING TOUR TO THE DATABASE - TEST ! */
 // const testTour = new Tour({
