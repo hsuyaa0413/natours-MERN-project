@@ -50,7 +50,7 @@ exports.getAllTours = async (req, res) => {
       const sortBy = req.query.sort.split(",").join(" ") // for multiple sorting strings
       query = query.sort(sortBy)
     } else {
-      query = query.sort("-createdAt")
+      query = query.sort("_id")
     }
 
     // 3. Field Limiting
@@ -59,6 +59,18 @@ exports.getAllTours = async (req, res) => {
       query = query.select(fields)
     } else {
       query = query.select("-__v")
+    }
+
+    // 4. Pagination
+    const page = req.query.page * 1 || 1
+    const limit = req.query.limit * 1 || 100
+    const skip = (page - 1) * limit
+
+    query = query.skip(skip).limit(limit)
+
+    if (req.query.page) {
+      const toursCount = await Tour.countDocuments()
+      if (skip >= toursCount) throw new Error("This page doesn't exist.")
     }
 
     // AWAIT QUERY
