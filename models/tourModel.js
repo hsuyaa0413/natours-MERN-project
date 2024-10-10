@@ -55,6 +55,10 @@ const tourSchema = new mongoose.Schema(
       select: false, // won't show if selected to false
     },
     startDates: [Date],
+    secretTour: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     toJSON: { virtuals: true },
@@ -81,6 +85,20 @@ tourSchema.pre("save", function (next) {
 //   console.log(doc)
 //   next()
 // })
+
+// QUERY MIDDLEWARE
+tourSchema.pre(/^find/, function (next) {
+  // instead of 'find' we used regex coz other methods like 'findOne' wouldn't have worked like we expected
+  this.find({ secretTour: { $ne: true } })
+
+  this.startTime = Date.now()
+  next()
+})
+
+tourSchema.post(/^find/, function (doc, next) {
+  console.log(`Query took ${Date.now() - this.startTime} milliseconds!😵`)
+  next()
+})
 
 const Tour = mongoose.model("Tour", tourSchema)
 
