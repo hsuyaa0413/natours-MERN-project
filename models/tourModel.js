@@ -1,5 +1,6 @@
 const mongoose = require("mongoose")
 const slugify = require("slugify")
+// const validator = require("validator")
 
 const tourSchema = new mongoose.Schema(
   {
@@ -8,6 +9,10 @@ const tourSchema = new mongoose.Schema(
       required: [true, "A tour must have a name."],
       unique: true,
       trim: true,
+      maxlength: [40, "A tour name must have 40 or less characters."],
+      minlength: [10, "A tour name must have 10 or more characters."],
+      // validate: [validator.isAlpha, "tour name should only contain alphabets"],
+      // validator.isAlpha doesn't work for namespaces so we didn't use here; we don't want that to happen
     },
     slug: String,
     duration: {
@@ -21,10 +26,16 @@ const tourSchema = new mongoose.Schema(
     difficulty: {
       type: String,
       required: [true, "A tour must have a difficulty"],
+      enum: {
+        values: ["easy", "medium", "difficult"],
+        message: "Difficulty is either: easy,medium or difficult",
+      },
     },
     ratingsAverage: {
       type: Number,
       default: 4.5,
+      min: [1, "Ratings Average must be greater than 1.0"],
+      max: [5, "Ratings Average must be less than 5.0"],
     },
     ratingsQuantity: {
       type: Number,
@@ -34,7 +45,17 @@ const tourSchema = new mongoose.Schema(
       type: Number,
       required: [true, "A tour must have a price"],
     },
-    priceDiscount: Number,
+    priceDiscount: {
+      type: Number,
+      validate: {
+        validator: function (val) {
+          // 'this' only points on NEW document creation, not on updation
+          return val < this.price
+        },
+        // message: props => `Discount price ${props.value} should be below its regular price`,
+        message: "Discount price ({VALUE}) should be below its regular price",
+      },
+    },
     summary: {
       type: String,
       trim: true,
@@ -70,7 +91,7 @@ tourSchema.virtual("durationWeeks").get(function () {
   return this.duration / 7
 })
 
-// DOCUMENT MIDDLEWARE: runs before .save() and .create()
+// DOCUMENT MIDDLEWARE: runs before .save() and .create() not on document updation
 tourSchema.pre("save", function (next) {
   this.slug = slugify(this.name, { lower: true })
   next()
