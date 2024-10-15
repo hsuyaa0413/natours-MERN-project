@@ -6,11 +6,11 @@ const tourSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "A tour must have a name."],
+      required: [true, "A tour must have a name"],
       unique: true,
       trim: true,
-      maxlength: [40, "A tour name must have 40 or less characters."],
-      minlength: [10, "A tour name must have 10 or more characters."],
+      maxlength: [40, "A tour name must have 40 or less characters"],
+      minlength: [10, "A tour name must have 10 or more characters"],
       // validate: [validator.isAlpha, "tour name should only contain alphabets"],
       // validator.isAlpha doesn't work for spaces in names, so we didn't use here; we don't want that to happen
     },
