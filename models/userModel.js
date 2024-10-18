@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema({
       message: "Passwords must match!",
     },
   },
+  passwordChangedAt: Date,
 })
 
 userSchema.pre("save", async function (next) {
@@ -51,6 +52,20 @@ userSchema.methods.correctPassword = async function (
   hashedPassword
 ) {
   return await bcrypt.compare(plainPassword, hashedPassword)
+}
+
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    )
+
+    return JWTTimestamp < changedTimestamp
+  }
+
+  // FALSE means pwd is not changed
+  return false
 }
 
 const User = mongoose.model("User", userSchema)
