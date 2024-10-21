@@ -17,6 +17,8 @@ exports.signup = catchAsync(async (req, res, next) => {
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
+    role: req.body.role,
+    passwordChangedAt: req.body.passwordChangedAt,
   })
   // this is done so as to only take required inputs in the server avoiding serious security issues/flaws
 
@@ -74,8 +76,8 @@ exports.protect = catchAsync(async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET)
 
   // 3. Check if user still exists (when jwt token was received but somehow user was deleted, so now token should no longer work hence this check is implemented)
-  const freshUser = await User.findById(decoded.id)
-  if (!freshUser) {
+  const currentUser = await User.findById(decoded.id)
+  if (!currentUser) {
     return next(
       new AppError("The user belonging to this token no longer exists."),
       401
@@ -83,13 +85,25 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // 4. Check if user changed their password after the token was issued
-  if (freshUser.changedPasswordAfter(decoded.iat)) {
+  if (currentUser.changedPasswordAfter(decoded.iat)) {
     return next(
       new AppError("User recently changed password! Please login again.", 401)
     )
   }
 
   // GRANT ACCESS TO THE PROTECTED ROUTE
-  req.user = freshUser
+  req.user = currentUser
   next()
 })
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError("You do not have permission to perform this action", 403)
+      )
+    }
+
+    next()
+  }
+}
