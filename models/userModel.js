@@ -55,6 +55,14 @@ userSchema.pre("save", async function (next) {
   next()
 })
 
+userSchema.pre("save", function (next) {
+  if (!this.isModified("password") || this.isNew) return next()
+
+  // 1 sec(1000ms) is reduced to simply not allow jwt to be created before this field
+  this.passwordChangedAt = Date.now() - 1000
+  next()
+})
+
 userSchema.methods.correctPassword = async function (
   plainPassword,
   hashedPassword
@@ -83,8 +91,6 @@ userSchema.methods.createPasswordResetToken = function () {
     .createHash("sha256")
     .update(resetToken)
     .digest("hex")
-
-  console.log({ resetToken }, this.passwordResetToken)
 
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000
 
